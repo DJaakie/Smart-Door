@@ -1,11 +1,167 @@
-# Build and Release Folders
-bin/
-bin-debug/
-bin-release/
-
-# Other files and folders
-.settings/
-
-# Project files, i.e. `.project`, `.actionScriptProperties` and `.flexProperties`
-# should NOT be excluded as they contain compiler settings and other important
-# information for Eclipse / Flash Builder.
+@name SmartDoor
+@persist SpawnPos:vector Prop1:entity Move GAIN Speed [Whitelist Adminlist]:table COpen
+@inputs Button1 Button2 Button3
+if(first()|duped()|dupefinished()){
+    #Door Move Speed=
+    Speed = 2
+        #Whitelist as many player you like :D
+    Whitelist["STEAM_0:1:42555761",string]="Julian"
+    Whitelist["STEAM_0:1:15459836",string]="LuckyGuy"
+    Whitelist[owner():steamID(),string]=owner():name()
+   
+    Prop1=entity():isWeldedTo()
+    SpawnPos=Prop1:pos()
+    Prop1:setPos(SpawnPos)
+    Prop1:propFreeze(1)
+    GAIN = 0
+    runOnChat(1)
+   
+#[   if (owner():steamID()!="STEAM_0:1:33753654"){
+        selfDestructAll()
+        hint("Don't Dupe My E2!!",7)
+        hint("Made By iJoshJenkins",7)
+    }]#
+   
+}
+interval(100)
+ 
+if(findCanQuery()) {
+    findIncludeClass("player")
+    findInSphere(entity():pos(),100000)
+    User = findClosest(entity():pos())
+}
+ 
+if(Whitelist:exists(User:steamID())){
+    if(User:aimEntity() == Prop1 & User:keyUse() &!Move | Button1 | Button2 | Button3){
+        COpen = 0
+        Move = 1
+        soundPlay(2,8,"ambient/boiler_01.wavF")
+    }
+}
+ 
+if(Move==1){
+    if(GAIN<140){
+        GAIN+=Speed
+        Prop1:setPos(SpawnPos+vec(0,0,GAIN)) "Direction Moving"
+    }else{
+        Move = 1.5
+        timer("Wait",3000)
+        soundPlay(2,1.2,"ambient/lightsoff.wavF")
+    }
+}elseif(Move==2 & COpen == 0){
+    if(GAIN>0){
+        GAIN-=Speed
+        Prop1:setPos(SpawnPos+vec(0,0,GAIN)) "Direction Moving Back"
+    }else{
+        Move = 0
+        soundPlay(1,1.2,"ambient/lightsoff.wavF")
+    }
+}
+if(clk("Wait")){Move=2,soundPlay(1,8,"ambient/boiler_01.wavF")}
+ 
+if(chatClk(owner())){
+    local Said=owner():lastSaid():explode(" ")
+    if(Said[1,string]=="-add"){
+        hideChat(1)
+        local Ply = findPlayerByName(Said[2,string])
+        if(Ply){
+            if(!Whitelist:exists(Ply:steamID())){
+                Whitelist[Ply:steamID(),string]=Ply:name()
+                printColor(vec(150,150,150),"SmartDoor: ",vec(200,200,255),Ply:name(),vec(150,150,150)," is ",vec(255,255,0),"Whitelisted",vec(0,255,0)," now")
+            }else{
+                printColor(vec(150,150,150),"SmartDoor: ",vec(200,200,255),Ply:name(),vec(150,150,150)," is ",vec(255,0,0),"already ",vec(255,255,0),"Whitelisted")
+            }
+        }else{
+            printColor(vec(150,150,150),"SmartDoor: ",vec(255,0,0),"Can not find ",vec(200,200,255),Said[2,string])
+        }
+    }elseif(Said[1,string]=="-print"){
+        hideChat(1)
+        printColor(vec(150,150,150),"SmartDoor ",vec(255,255,0),"Whitelist: ")
+        foreach( K , V:string=Whitelist){
+            printColor(vec(150,150,150),K+" ",vec(255,255,255),V)
+        }
+    }elseif(Said[1,string]=="-remove"){
+        hideChat(1)
+        local Ply = findPlayerByName(Said[2,string])
+        if(Ply){
+            if(Whitelist:exists(Ply:steamID())){
+                Whitelist:remove(Ply:steamID())
+                printColor(vec(150,150,150),"SmartDoor: ",vec(200,200,255),Ply:name(),vec(150,150,150)," is ",vec(255,0,0),"NOT ",vec(255,255,0),"Whitelisted",vec(150,150,150)," anymore")
+            }else{
+                printColor(vec(150,150,150),"SmartDoor: ",vec(200,200,255),Ply:name(),vec(200,0,0)," not found ",vec(150,150,150),"on ",vec(255,255,0),"Whitelist")
+            }
+        }else{
+            printColor(vec(150,150,150),"SmartDoor: ",vec(255,0,0),"Can not find ",vec(200,200,255),Said[2,string])
+        }
+    }elseif(Said[1,string]=="-speed"){
+        hideChat(1)
+        Speed = Said[2,string]:toNumber()
+        printColor(vec(150,150,150),"SmartDoor ",vec(255,255,0),"Speed Set to : ", vec(255,0,0),Speed)
+    }elseif(Said[1,string]=="-open"){
+        hideChat(1)
+        COpen = 1
+        Move = 1
+        soundPlay(1,2.5,"doors/doormove2.wav")
+        printColor(vec(150,150,150),"SmartDoor ",vec(255,255,0),"Opened")
+    }elseif(Said[1,string]=="-close"){
+        hideChat(1)
+        COpen = 0
+        Move = 2
+        soundPlay(1,2.5,"doors/doormove2.wav")
+        printColor(vec(150,150,150),"SmartDoor ",vec(255,255,0),"Closed")
+    }elseif(Said[1,string]=="-hide"){
+        hideChat(1)
+        entity():propNotSolid(1)
+    }elseif(Said[1,string]=="-show"){
+        hideChat(1)
+        entity():propNotSolid(0)
+    }elseif(Said[1,string]=="-admin"){
+        if(Said[2,string]=="add"){
+            hideChat(1)
+                local Ply = findPlayerByName(Said[3,string])
+                if(Ply){
+                    if(!Adminlist:exists(Ply:steamID())){
+                        Adminlist[Ply:steamID(),string]=Ply:name()
+                        printColor(vec(150,150,150),"SmartDoor: ",vec(200,200,255),Ply:name(),vec(150,150,150)," is ",vec(255,255,0),"Set As Admin",vec(0,255,0)," now")
+                    }else{
+                        printColor(vec(150,150,150),"SmartDoor: ",vec(200,200,255),Ply:name(),vec(150,150,150)," is ",vec(255,0,0),"already ",vec(255,255,0),"Admin")
+                    }
+                }else{
+                    printColor(vec(150,150,150),"SmartDoor: ",vec(255,0,0),"Can not find ",vec(200,200,255),Said[3,string])
+                }
+        }elseif(Said[2,string]=="remove"){
+            hideChat(1)
+            local Ply = findPlayerByName(Said[3,string])
+            if(Ply){
+                if(Adminlist:exists(Ply:steamID())){
+                    Adminlist:remove(Ply:steamID())
+                    printColor(vec(150,150,150),"SmartDoor: ",vec(200,200,255),Ply:name(),vec(150,150,150)," is ",vec(255,0,0),"NOT ",vec(255,255,0),"Admin",vec(150,150,150)," anymore")
+                }else{
+                    printColor(vec(150,150,150),"SmartDoor: ",vec(200,200,255),Ply:name(),vec(200,0,0)," not found ",vec(150,150,150),"on ",vec(255,255,0),"Adminlist")
+                }
+            }else{
+                printColor(vec(150,150,150),"SmartDoor: ",vec(255,0,0),"Can not find ",vec(200,200,255),Said[3,string])
+            }
+        }
+    }
+}
+ 
+#[if(Adminlist:exists(lastSpoke():steamID())){
+    AUser = lastSpoke()
+    local ASaid = AUser:lastSaid():explode(" ")
+   
+    if(ASaid[1,string]=="-add"){
+        hideChat(1)
+        local Ply = findPlayerByName(ASaid[2,string])
+        if(Ply){
+            if(!Whitelist:exists(Ply:steamID())){
+                Whitelist[Ply:steamID(),string]=Ply:name()
+                printColor(vec(150,150,150),"SmartDoor: ",vec(200,200,255),Ply:name(),vec(150,150,150)," is ",vec(255,255,0),"Whitelisted",vec(0,255,0)," now")
+            }else{
+                printColor(vec(150,150,150),"SmartDoor: ",vec(200,200,255),Ply:name(),vec(150,150,150)," is ",vec(255,0,0),"already ",vec(255,255,0),"Whitelisted")
+            }
+        }else{
+            printColor(vec(150,150,150),"SmartDoor: ",vec(255,0,0),"Can not find ",vec(200,200,255),ASaid[2,string])
+        }
+    }
+}]#
